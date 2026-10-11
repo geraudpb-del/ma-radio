@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ma Radio</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icone-192.png">
+<meta name="theme-color" content="#0f1420">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+  /* Une colonne, ambiance chambre la nuit : fond bleu nuit, accent ambre doux qui ne réveille pas */
+  :root {
+    --nuit: #0f1420;
+    --carte: #182030;
+    --carte-active: #22304a;
+    --trait: #2a3550;
+    --texte: #e8e4da;
+    --doux: #8f97ab;
+    --ambre: #f2b25c;
+    --lune: #c9d4f2;
+    --titre: "Fraunces", Georgia, serif;
+    --corps: "Atkinson Hyperlegible", system-ui, sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background: var(--nuit);
+    color: var(--texte);
+    font: 16px/1.5 var(--corps);
+    padding-inline: 16px;
+    padding-block: 24px 40px;
+  }
+  main { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+  h1 { font: 600 2rem/1.1 var(--titre); margin: 0; letter-spacing: -0.01em; }
+  h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--doux); margin: 0 0 10px; font-weight: 700; }
+  header p { margin: 4px 0 0; color: var(--doux); }
+
+  .grille { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .station {
+    font: inherit; color: inherit; text-align: left; cursor: pointer;
+    background: var(--carte); border: 1px solid var(--trait); border-radius: 14px;
+    padding: 16px; display: flex; align-items: center; gap: 12px; min-height: 84px;
+  }
+  .station .rond {
+    flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--carte-active); color: var(--ambre); border: 1px solid var(--trait);
+  }
+  .station .rond svg { width: 16px; height: 16px; fill: currentColor; }
+  .station[aria-pressed="true"] .rond { background: var(--ambre); color: var(--nuit); border-color: var(--ambre); }
+  .station .txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .station strong { font-size: 1.1rem; }
+  .station span { color: var(--doux); font-size: 0.85rem; }
+  .station:hover { border-color: var(--doux); }
+  .station[aria-pressed="true"] { background: var(--carte-active); border-color: var(--ambre); }
+  .station[aria-pressed="true"] span { color: var(--ambre); }
+  .petites .station { min-height: 0; padding: 12px 14px; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--ambre); outline-offset: 2px; }
+
+  .lecteur {
+    background: var(--carte); border: 1px solid var(--trait); border-radius: 18px;
+    padding: 18px; display: flex; flex-direction: column; gap: 14px;
+  }
+  .en-cours { display: flex; align-items: center; gap: 14px; }
+  .jouer {
+    flex: none; width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;
+    background: var(--ambre); color: var(--nuit); display: grid; place-items: center;
+  }
+  .jouer:disabled { opacity: 0.4; cursor: default; }
+  .jouer svg { width: 22px; height: 22px; fill: currentColor; }
+  .nom { min-width: 0; }
+  .nom strong { display: block; font: 600 1.25rem/1.2 var(--titre); }
+  .nom span { color: var(--doux); font-size: 0.9rem; }
+  .volume { display: flex; align-items: center; gap: 10px; color: var(--doux); font-size: 0.85rem; }
+  .volume input { flex: 1; accent-color: var(--ambre); }
+
+  .sommeil {
+    border: 1px solid var(--trait); border-radius: 18px; padding: 18px;
+    display: flex; flex-direction: column; gap: 14px;
+    background: linear-gradient(160deg, #161d33, var(--nuit));
+  }
+  .sommeil-haut { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .compte { font: 600 2.6rem/1 var(--titre); font-variant-numeric: tabular-nums; color: var(--lune); }
+  .compte.eteint { color: var(--trait); }
+  .sommeil p { margin: 0; color: var(--doux); font-size: 0.9rem; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .plus5 {
+    flex: 1 1 200px; font: 700 1.1rem var(--corps); cursor: pointer; padding: 16px;
+    border-radius: 14px; border: 1px solid var(--lune); background: transparent; color: var(--lune);
+  }
+  .plus5:active { background: var(--carte-active); }
+  .annuler {
+    flex: 0 1 auto; font: inherit; cursor: pointer; padding: 16px; border-radius: 14px;
+    border: 1px solid var(--trait); background: transparent; color: var(--doux);
+  }
+  .erreur { color: var(--ambre); font-size: 0.9rem; margin: 0; }
+  @media (prefers-reduced-motion: no-preference) {
+    .station, .plus5 { transition: border-color .15s, background .15s; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Ma Radio</h1>
+    <p>Choisis une station, puis règle la minuterie pour t'endormir.</p>
+  </header>
+
+  <section>
+    <h2>Favoris · touche une radio pour l'écouter</h2>
+    <div class="grille" id="favoris"></div>
+  </section>
+
+  <section class="lecteur" aria-label="Lecteur">
+    <div class="en-cours">
+      <button class="jouer" id="jouer" disabled aria-label="Lecture">
+        <svg viewBox="0 0 24 24" id="icone"><path d="M7 4l13 8-13 8z"/></svg>
+      </button>
+      <div class="nom">
+        <strong id="nom">Aucune station</strong>
+        <span id="etat">Touche une station pour l'écouter</span>
+      </div>
+    </div>
+    <label class="volume" for="volume">Volume
+      <input type="range" id="volume" min="0" max="1" step="0.05" value="0.8">
+    </label>
+    <p class="erreur" id="erreur" hidden></p>
+  </section>
+
+  <section class="sommeil" aria-label="Minuterie de sommeil">
+    <div class="sommeil-haut">
+      <h2 style="margin:0">Minuterie de sommeil</h2>
+      <div class="compte eteint" id="compte" aria-live="polite">0:00</div>
+    </div>
+    <p id="aide">Chaque appui ajoute 5 minutes. Le son baisse doucement pendant les 30 dernières secondes, puis la radio s'arrête.</p>
+    <div class="actions">
+      <button class="plus5" id="plus5">+ 5 minutes</button>
+      <button class="annuler" id="annuler" hidden>Annuler</button>
+    </div>
+  </section>
+
+  <section class="petites">
+    <h2>Autres stations Radio France</h2>
+    <div class="grille" id="autres"></div>
+  </section>
+</main>
+
+<script>
+const RF = "https://icecast.radiofrance.fr/";
+const FAVORIS = [
+  { id: "inter", nom: "France Inter", sous: "Radio France", url: RF + "franceinter-midfi.mp3" },
+  { id: "info", nom: "franceinfo", sous: "Radio France", url: RF + "franceinfo-midfi.mp3" },
+  { id: "europe1", nom: "Europe 1", sous: "Info et débats", url: "https://stream.europe1.fr/europe1.mp3" },
+  { id: "bfm", nom: "BFM Business", sous: "Économie", url: "https://audio.bfmtv.com/bfmbusiness_128.mp3" },
+];
+const AUTRES = [
+  { id: "culture", nom: "France Culture", sous: "Radio France", url: RF + "franceculture-midfi.mp3" },
+  { id: "musique", nom: "France Musique", sous: "Radio France", url: RF + "francemusique-midfi.mp3" },
+  { id: "fip", nom: "FIP", sous: "Radio France", url: RF + "fip-midfi.mp3" },
+  { id: "mouv", nom: "Mouv'", sous: "Radio France", url: RF + "mouv-midfi.mp3" },
+];
+const TOUTES = [...FAVORIS, ...AUTRES];
+
+const audio = new Audio();
+audio.preload = "none";
+const $ = (id) => document.getElementById(id);
+let courante = null;
+let volumeChoisi = 0.8;
+let finMinuterie = 0;
+let tic = null;
+
+function lire(cle, defaut) { try { return localStorage.getItem(cle) ?? defaut; } catch { return defaut; } }
+function ecrire(cle, val) { try { localStorage.setItem(cle, val); } catch {} }
+
+function dessinerStations(liste, conteneur) {
+  for (const s of liste) {
+    const b = document.createElement("button");
+    b.className = "station";
+    b.dataset.id = s.id;
+    b.setAttribute("aria-pressed", "false");
+    b.innerHTML = `<span class="rond"><svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg></span>` +
+      `<span class="txt"><strong>${s.nom}</strong><span>${s.sous}</span></span>`;
+    b.addEventListener("click", () => {
+      if (courante?.id === s.id && !audio.paused) arreter();
+      else jouer(s);
+    });
+    conteneur.appendChild(b);
+  }
+}
+
+function jouer(s) {
+  courante = s;
+  ecrire("radio-station", s.id);
+  $("erreur").hidden = true;
+  audio.src = s.url;
+  audio.volume = volumeChoisi;
+  $("etat").textContent = "Connexion…";
+  audio.play().catch(() => {});
+  majAffichage();
+  if ("mediaSession" in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({ title: s.nom, artist: s.sous });
+  }
+}
+
+function arreter() {
+  audio.pause();
+  audio.removeAttribute("src");
+  audio.load();
+  majAffichage();
+}
+
+function majAffichage() {
+  const enLecture = courante && !audio.paused;
+  document.querySelectorAll(".station").forEach((b) => {
+    const active = enLecture && b.dataset.id === courante.id;
+    b.setAttribute("aria-pressed", String(active));
+    b.querySelector("svg").innerHTML = active ? '<rect x="6" y="6" width="12" height="12" rx="1"/>' : '<path d="M7 4l13 8-13 8z"/>';
+  });
+  $("jouer").disabled = !courante;
+  $("jouer").setAttribute("aria-label", enLecture ? "Arrêter" : "Lecture");
+  $("icone").innerHTML = enLecture
+    ? '<rect x="6" y="6" width="12" height="12" rx="1"/>'
+    : '<path d="M7 4l13 8-13 8z"/>';
+  $("nom").textContent = courante ? courante.nom : "Aucune station";
+  if (!courante) return;
+  if (enLecture) $("etat").textContent = "En direct";
+  else if ($("etat").textContent !== "Connexion…") $("etat").textContent = "En pause";
+}
+
+audio.addEventListener("playing", () => { $("etat").textContent = "En direct"; majAffichage(); });
+audio.addEventListener("pause", majAffichage);
+audio.addEventListener("waiting", () => { $("etat").textContent = "Connexion…"; });
+audio.addEventListener("error", () => {
+  if (!audio.getAttribute("src")) return;
+  $("erreur").textContent = "Le flux ne répond pas. Vérifie ta connexion ou essaie une autre station.";
+  $("erreur").hidden = false;
+  $("etat").textContent = "Indisponible";
+  majAffichage();
+});
+
+$("jouer").addEventListener("click", () => {
+  if (!courante) return;
+  if (audio.paused) jouer(courante); else arreter();
+});
+
+$("volume").value = lire("radio-volume", "0.8");
+volumeChoisi = Number($("volume").value);
+$("volume").addEventListener("input", (e) => {
+  volumeChoisi = Number(e.target.value);
+  ecrire("radio-volume", String(volumeChoisi));
+  if (!finMinuterie || finMinuterie - Date.now() > 30000) audio.volume = volumeChoisi;
+});
+
+// Minuterie de sommeil
+const FONDU = 30000;
+function format(ms) {
+  const t = Math.ceil(ms / 1000);
+  const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
+  const ss = String(s).padStart(2, "0");
+  return h ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`;
+}
+function tictac() {
+  const reste = finMinuterie - Date.now();
+  if (reste <= 0) {
+    arreter();
+    audio.volume = volumeChoisi;
+    annulerMinuterie("Radio arrêtée. Bonne nuit.");
+    return;
+  }
+  $("compte").textContent = format(reste);
+  if (reste < FONDU && !audio.paused) audio.volume = volumeChoisi * (reste / FONDU);
+}
+function annulerMinuterie(message) {
+  clearInterval(tic); tic = null; finMinuterie = 0;
+  audio.volume = volumeChoisi;
+  $("compte").textContent = "0:00";
+  $("compte").classList.add("eteint");
+  $("annuler").hidden = true;
+  $("plus5").textContent = "+ 5 minutes";
+  $("aide").textContent = message || "Chaque appui ajoute 5 minutes. Le son baisse doucement pendant les 30 dernières secondes, puis la radio s'arrête.";
+}
+$("plus5").addEventListener("click", () => {
+  const base = finMinuterie > Date.now() ? finMinuterie : Date.now();
+  finMinuterie = base + 5 * 60000;
+  audio.volume = volumeChoisi;
+  $("compte").classList.remove("eteint");
+  $("annuler").hidden = false;
+  $("plus5").textContent = "+ 5 minutes de plus";
+  $("aide").textContent = "La radio s'arrêtera à " +
+    new Date(finMinuterie).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) + ".";
+  if (courante && audio.paused) jouer(courante);
+  if (!tic) tic = setInterval(tictac, 250);
+  tictac();
+});
+$("annuler").addEventListener("click", () => annulerMinuterie());
+
+dessinerStations(FAVORIS, $("favoris"));
+dessinerStations(AUTRES, $("autres"));
+courante = TOUTES.find((s) => s.id === lire("radio-station", "")) || null;
+majAffichage();
+if (courante) $("etat").textContent = "Dernière écoutée, touche lecture";
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
