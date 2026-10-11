@@ -100,6 +100,15 @@
     border: 1px solid var(--trait); background: transparent; color: var(--doux);
   }
   .erreur { color: var(--ambre); font-size: 0.9rem; margin: 0; }
+  .installer {
+    display: flex; align-items: center; gap: 14px; text-align: left; width: 100%;
+    font: inherit; color: inherit; cursor: pointer; padding: 14px 16px;
+    background: transparent; border: 1px dashed var(--trait); border-radius: 14px;
+  }
+  .installer img { width: 44px; height: 44px; border-radius: 10px; flex: none; }
+  .installer strong { display: block; }
+  .installer span { color: var(--doux); font-size: 0.85rem; }
+  .consigne { margin: 10px 0 0; color: var(--texte); font-size: 0.95rem; }
   @media (prefers-reduced-motion: no-preference) {
     .station, .plus5 { transition: border-color .15s, background .15s; }
   }
@@ -143,6 +152,14 @@
       <button class="plus5" id="plus5">+ 5 minutes</button>
       <button class="annuler" id="annuler" hidden>Annuler</button>
     </div>
+  </section>
+
+  <section id="bloc-installer" hidden>
+    <button class="installer" id="installer">
+      <img src="icone-192.png" alt="">
+      <span><strong>Ajouter à l'écran d'accueil</strong><span>Pour ouvrir Ma Radio d'un geste, comme une appli</span></span>
+    </button>
+    <p class="consigne" id="consigne" hidden></p>
   </section>
 
   <section class="petites">
@@ -299,6 +316,21 @@ $("plus5").addEventListener("click", () => {
   tictac();
 });
 $("annuler").addEventListener("click", () => annulerMinuterie());
+
+// Ajout à l'écran d'accueil : vraie fenêtre d'installation sur Android, consigne sur iPhone
+const dejaInstallee = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+const iphone = /iPhone|iPad|iPod/.test(navigator.userAgent);
+let invite = null;
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); invite = e; $("bloc-installer").hidden = false; });
+window.addEventListener("appinstalled", () => { $("bloc-installer").hidden = true; });
+if (!dejaInstallee && iphone) $("bloc-installer").hidden = false;
+$("installer").addEventListener("click", async () => {
+  if (invite) { invite.prompt(); await invite.userChoice.catch(() => {}); invite = null; return; }
+  $("consigne").textContent = iphone
+    ? "Dans Safari, touche le bouton Partager (le carré avec une flèche), puis « Sur l'écran d'accueil »."
+    : "Ouvre le menu ⋮ de Chrome, puis « Ajouter à l'écran d'accueil ».";
+  $("consigne").hidden = false;
+});
 
 dessinerStations(FAVORIS, $("favoris"));
 dessinerStations(AUTRES, $("autres"));

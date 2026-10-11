@@ -1,5 +1,5 @@
 // Garde la page en cache pour qu'elle s'ouvre vite ; les flux radio passent toujours par le réseau.
-const CACHE = "ma-radio-v1";
+const CACHE = "ma-radio-v2";
 const FICHIERS = ["./", "index.html", "manifest.webmanifest", "icone-192.png", "icone-512.png", "apple-touch-icon.png"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FICHIERS))); self.skipWaiting(); });
 self.addEventListener("activate", (e) => {
